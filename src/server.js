@@ -43,6 +43,21 @@ function resolveGatewayToken() {
 const OPENCLAW_GATEWAY_TOKEN = resolveGatewayToken();
 process.env.OPENCLAW_GATEWAY_TOKEN = OPENCLAW_GATEWAY_TOKEN;
 
+let cachedOpenclawVersion = null;
+let cachedChannelsHelp = null;
+
+async function getOpenclawInfo() {
+  if (!cachedOpenclawVersion) {
+    const [version, channelsHelp] = await Promise.all([
+      runCmd(OPENCLAW_NODE, clawArgs(["--version"])),
+      runCmd(OPENCLAW_NODE, clawArgs(["channels", "add", "--help"])),
+    ]);
+    cachedOpenclawVersion = version.output.trim();
+    cachedChannelsHelp = channelsHelp.output;
+  }
+  return { version: cachedOpenclawVersion, channelsHelp: cachedChannelsHelp };
+}
+
 const INTERNAL_GATEWAY_PORT = Number.parseInt(
   process.env.INTERNAL_GATEWAY_PORT ?? "18789",
   10,
@@ -232,11 +247,7 @@ app.get("/setup", requireSetupAuth, (_req, res) => {
 });
 
 app.get("/setup/api/status", requireSetupAuth, async (_req, res) => {
-  const version = await runCmd(OPENCLAW_NODE, clawArgs(["--version"]));
-  const channelsHelp = await runCmd(
-    OPENCLAW_NODE,
-    clawArgs(["channels", "add", "--help"]),
-  );
+  const { version, channelsHelp } = await getOpenclawInfo();
 
   const authGroups = [
     {
@@ -344,8 +355,8 @@ app.get("/setup/api/status", requireSetupAuth, async (_req, res) => {
   res.json({
     configured: isConfigured(),
     gatewayTarget: GATEWAY_TARGET,
-    openclawVersion: version.output.trim(),
-    channelsAddHelp: channelsHelp.output,
+    openclawVersion: version,
+    channelsAddHelp: channelsHelp,
     authGroups,
   });
 });
@@ -485,6 +496,14 @@ app.post("/setup/api/run", requireSetupAuth, async (req, res) => {
       await runCmd(
         OPENCLAW_NODE,
         clawArgs(["config", "set", "gateway.controlUi.allowInsecureAuth", "true"]),
+      );
+      await runCmd(
+        OPENCLAW_NODE,
+        clawArgs(["config", "set", "gateway.auth.token", OPENCLAW_GATEWAY_TOKEN]),
+      );
+      await runCmd(
+        OPENCLAW_NODE,
+        clawArgs(["config", "set", "--json", "gateway.trustedProxies", '["127.0.0.1"]']),
       );
 
       const channelsHelp = await runCmd(
@@ -685,6 +704,10 @@ app.use(async (req, res) => {
         .type("text/plain")
         .send(`Gateway not ready: ${String(err)}`);
     }
+  }
+
+  if (req.path === "/openclaw" && !req.query.token) {
+    return res.redirect(`/openclaw?token=${OPENCLAW_GATEWAY_TOKEN}`);
   }
 
   return proxy.web(req, res, { target: GATEWAY_TARGET });
