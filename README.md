@@ -109,6 +109,10 @@ A: Make sure `ENABLE_WEB_TUI=true` is set in your Railway Variables and redeploy
 
 A: Go to `/setup` and use the "Approve Pairing" dialog to approve pending pairing requests from your chat channels.
 
+**Q: I see "pairing required" when opening the Control UI. How do I fix it?**
+
+A: New browsers/devices need a one-time approval from the gateway. Go to `/setup`, click "Manage Devices" in the Devices section, and click "Approve Latest Request". Refresh the Control UI and it should connect. Local connections (127.0.0.1) are auto-approved; remote connections (LAN, public URL) require explicit approval.
+
 **Q: How do I change the AI model after setup?**
 
 A: Use the OpenClaw CLI to switch models. Access the web terminal at `/tui` (if enabled) or SSH into your container and run:
