@@ -8,6 +8,10 @@
 
 <img width="1860" height="2624" alt="CleanShot 2026-02-23 at 21 59 06@2x" src="https://github.com/user-attachments/assets/2605d44c-4319-4e92-838c-3caa726b9595" />
 
+## TUI
+
+<img width="2510" height="608" alt="CleanShot 2026-02-23 at 22 08 20@2x" src="https://github.com/user-attachments/assets/61147ec2-ddd5-4b5b-b9ac-0dd81a1ae4c7" />
+
 ## Device approval
 
 <img width="1712" height="1376" alt="CleanShot 2026-02-23 at 21 59 21@2x" src="https://github.com/user-attachments/assets/f30ab683-dbc2-4980-ace7-152265e00c79" />
