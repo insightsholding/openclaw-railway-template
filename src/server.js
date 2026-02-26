@@ -1045,6 +1045,25 @@ app.use(async (req, res) => {
     return res.redirect("/setup");
   }
 
+  // Autenticação obrigatória via SETUP_PASSWORD
+  if (isConfigured() && SETUP_PASSWORD && !req.path.startsWith("/setup")) {
+    const header = req.headers.authorization || "";
+    const [scheme, encoded] = header.split(" ");
+    let authenticated = false;
+    if (scheme === "Basic" && encoded) {
+      const decoded = Buffer.from(encoded, "base64").toString("utf8");
+      const idx = decoded.indexOf(":");
+      const password = idx >= 0 ? decoded.slice(idx + 1) : "";
+      const passwordHash = crypto.createHash("sha256").update(password).digest();
+      const expectedHash = crypto.createHash("sha256").update(SETUP_PASSWORD).digest();
+      authenticated = crypto.timingSafeEqual(passwordHash, expectedHash);
+    }
+    if (!authenticated) {
+      res.set("WWW-Authenticate", 'Basic realm="Calvane - Sá Cavalcante"');
+      return res.status(401).send("Acesso restrito. Informe suas credenciais.");
+    }
+  }
+
   if (isConfigured()) {
     if (!isGatewayReady()) {
       try {
