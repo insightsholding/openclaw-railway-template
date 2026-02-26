@@ -612,8 +612,20 @@ app.post("/setup/api/run", requireSetupAuth, async (req, res) => {
           "true",
         ]),
       );
+      
       extra += `[config] gateway.controlUi.allowInsecureAuth=true exit=${allowInsecureResult.code}\n`;
 
+      const disablePairingResult = await runCmd(
+  OPENCLAW_NODE,
+  clawArgs([
+    "config",
+    "set",
+    "gateway.controlUi.dangerouslyDisableDeviceAuth",
+    "true",
+  ]),
+);
+extra += `[config] gateway.controlUi.dangerouslyDisableDeviceAuth=true exit=${disablePairingResult.code}\n`;
+      
       const tokenResult = await runCmd(
         OPENCLAW_NODE,
         clawArgs([
@@ -1082,9 +1094,9 @@ app.use(async (req, res) => {
     }
   }
 
-  if (req.path === "/openclaw" && !req.query.token) {
-    return res.redirect(`/openclaw?token=${OPENCLAW_GATEWAY_TOKEN}`);
-  }
+  if (!req.query.token && (req.path === "/" || req.path === "/openclaw")) {
+  return res.redirect(`/?token=${OPENCLAW_GATEWAY_TOKEN}`);
+}
 
   return proxy.web(req, res, { target: GATEWAY_TARGET });
 });
